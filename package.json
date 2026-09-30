@@ -10,7 +10,8 @@
   "scripts": {
     "test": "node --test tests/",
     "lint": "tsc --noEmit",
-    "hook:dry-run": "node user-prompt-submit.ts --dry-run"
+    "hook:dry-run": "node user-prompt-submit.ts --dry-run",
+    "report": "node scripts/router-report.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

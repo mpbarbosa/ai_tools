@@ -24,7 +24,9 @@ So: no model is called here. Not Claude, not Jev. Phase 2 earns that with this l
 | `prompt-router-core.ts` | pure: facts, heuristics, thresholds, the decision. No network, no clock, no filesystem — `tests/` enforces it by reading the source |
 | `router-log.ts` | the I/O half: where the record goes, and the few things the router must leave the module to learn |
 | `user-prompt-submit.ts` | the hook entry. Reads stdin, appends one line, always exits 0 |
-| `tests/prompt-router-core.test.ts` | fixed inputs, one case per branch, each verified by deleting its rule and watching the test go red |
+| `router-report-core.ts` | pure: reads the JSONL, counts, renders. Defensive — the log spans rule versions |
+| `scripts/router-report.ts` | finds the file and writes to stdout; nothing else |
+| `tests/` | fixed inputs, one case per branch, each verified by deleting its rule and watching the test go red |
 
 ### Running it
 
@@ -52,6 +54,26 @@ with the working directory of whichever project submitted the prompt.
 Measured cost: **~80 ms per prompt**, of which ~60 ms is Node stripping the types of
 these three modules and ~20 ms is Node starting at all. If that ever matters,
 precompiling to JS is the fix; at 80 ms it does not.
+
+### Reading the log
+
+```bash
+npm run report                            # the default log
+node scripts/router-report.ts --json      # for further slicing
+node scripts/router-report.ts other.jsonl --sample 10
+```
+
+It leads with the two numbers that decide whether Phase 2 is worth starting —
+how often the classifier **said nothing** (`fellBack`), and how often it would
+have **changed anything** — then the distributions, the prompt-size spread, the
+confident recommendations to leave the session, and the prompts the heuristics
+could not read. That last list is the Phase 2 worklist: if a model-backed judge
+is ever justified, it is justified there.
+
+Two deliberate refusals to flatter the router. A record whose session effort is
+unknown is **not** counted as agreement, because it proves nothing either way.
+And mixed `HEURISTICS_VERSION`s are called out rather than pooled: records
+written under different rules are different populations.
 
 ### Switches
 
