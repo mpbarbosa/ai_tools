@@ -91,11 +91,21 @@ measurement it exists to produce.
 ### Not everything the hook receives is a prompt
 
 Claude Code delivers more than typed prompts through `UserPromptSubmit`: a `!`
-command run in the terminal panel arrives wrapped in `<bash-input>`, and a
-finished background task arrives as `<task-notification>`. Both were in the log
-within minutes of the hook going live. Those are dropped — silently, writing
-nothing — because routing an event is meaningless and keeping it poisons the
-eval set this file exists to become.
+command run in the terminal panel arrives wrapped in `<bash-input>`, a finished
+background task arrives as `<task-notification>`, and a scheduled task's own
+instructions arrive as `<scheduled-task …>`. Those are dropped — silently,
+writing nothing — because routing an event is meaningless and keeping it
+poisons the eval set this file exists to become.
+
+`scheduled-task` is the one that proved the point. The weekly report job's
+prompt was logged twice at 1514 estimated tokens and read as `code_edit` /
+`isBulk` / `headless_cheap` — the only two non-`in_session` routes in the first
+48 records, both false positives, because a prompt *describing* batch routing
+reads like batch work. Each also outweighed about thirty ordinary prompts by
+token count, so one scheduled run would have skewed the week it was meant to
+measure. It also exposed a bug in the matcher: the tag carries attributes, and
+the first version of the rule required `>` immediately after the tag name, so
+it saw `<bash-input>` and missed `<scheduled-task …>` completely.
 
 `NON_PROMPT_WRAPPERS` is an empirical list, not an exhaustive one. When a new
 wrapper turns up, add it:

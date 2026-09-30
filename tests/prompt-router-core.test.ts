@@ -53,6 +53,18 @@ test("machine-generated events are not prompts", () => {
   assert.equal(skipReason(""), "empty");
 });
 
+test("a wrapper tag is recognised even when it carries attributes", () => {
+  // The real payload, which the first version of this rule missed because it
+  // required `>` immediately after the tag name.
+  assert.equal(
+    skipReason('<scheduled-task name="prompt-router-first-week" file="/home/mpb/.claude/x/SKILL.md">\nCheck the report.\n</scheduled-task>'),
+    "scheduled-task",
+  );
+  assert.equal(skipReason("<scheduled-task>bare form too</scheduled-task>"), "scheduled-task");
+  // An attribute-bearing tag that is not on the list is still kept.
+  assert.equal(skipReason('<div class="x">pasted markup</div>'), null);
+});
+
 test("a real prompt survives, even when it talks about the wrappers", () => {
   assert.equal(skipReason("commit this"), null);
   // Only a LEADING tag is an event. Asking about one is an ordinary prompt.

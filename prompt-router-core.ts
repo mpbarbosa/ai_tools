@@ -27,16 +27,23 @@
 /** Bumped whenever a threshold or pattern changes, and written into every
  *  record: a log that cannot say which rules produced it cannot be re-scored
  *  later, which is the whole point of keeping it. */
-export const HEURISTICS_VERSION = "1.1.0";
+export const HEURISTICS_VERSION = "1.2.0";
 
 /**
  * Wrapper tags Claude Code delivers through `UserPromptSubmit` that nobody
  * typed: a `!` command run in the terminal panel arrives wrapped in
- * `<bash-input>`, and a finished background task arrives as
- * `<task-notification>`. Both are events, not prompts, and both were in the
- * log within minutes of the hook going live — a quarter of the first four
- * records. Routing them is meaningless and leaving them in poisons the eval
- * set Phase 2 builds from this file.
+ * `<bash-input>`, a finished background task arrives as `<task-notification>`,
+ * and a scheduled task's own instructions arrive as `<scheduled-task …>`.
+ * Routing them is meaningless and leaving them in poisons the eval set Phase 2
+ * builds from this file.
+ *
+ * `scheduled-task` is the one that proved the point. The weekly report job's
+ * prompt was logged twice at 1514 estimated tokens and classified `code_edit`
+ * / `isBulk` / `headless_cheap` — the only two non-`in_session` routes in the
+ * first 48 records, both false positives, because a prompt *describing* batch
+ * routing reads exactly like batch work. Each one also outweighs about thirty
+ * ordinary prompts by token count, so a single scheduled run would skew the
+ * very week of data it exists to analyse.
  *
  * An empirical list, not an exhaustive one: add a tag when the log shows a new
  * one (`jq -r 'select(.prompt.text | startswith("<"))'`). Only a *leading* tag
@@ -44,7 +51,7 @@ export const HEURISTICS_VERSION = "1.1.0";
  * `<pasted_content>` is deliberately absent, since a bare paste is something
  * the user submitted.
  */
-export const NON_PROMPT_WRAPPERS: readonly string[] = ["bash-input", "task-notification"];
+export const NON_PROMPT_WRAPPERS: readonly string[] = ["bash-input", "task-notification", "scheduled-task"];
 
 /**
  * Why this payload should not be recorded, or `null` to record it. Pure, and
@@ -54,7 +61,11 @@ export const NON_PROMPT_WRAPPERS: readonly string[] = ["bash-input", "task-notif
 export const skipReason = (prompt: string): string | null => {
   const text = prompt.trim();
   if (text.length === 0) return "empty";
-  const tag = /^<([a-z][a-z0-9-]*)>/.exec(text)?.[1];
+  // The tag may carry attributes — `<scheduled-task name="…" file="…">` — so
+  // the name is terminated by whitespace or `>`, not by `>` alone. Requiring
+  // `>` is why the first version of this rule saw `<bash-input>` and missed
+  // `<scheduled-task …>` entirely.
+  const tag = /^<([a-z][a-z0-9-]*)(?=[\s>])/.exec(text)?.[1];
   return tag !== undefined && NON_PROMPT_WRAPPERS.includes(tag) ? tag : null;
 };
 
