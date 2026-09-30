@@ -61,6 +61,12 @@ test("a wrapper tag is recognised even when it carries attributes", () => {
     "scheduled-task",
   );
   assert.equal(skipReason("<scheduled-task>bare form too</scheduled-task>"), "scheduled-task");
+  assert.equal(skipReason("<command-name>/auto-mode-setup</command-name>"), "command-name");
+  // A slash command reaches the hook in its bare form, and that IS a prompt:
+  // `/session-pending` is in the log, read as `meta`. Only the rendered
+  // wrapper is dropped.
+  assert.equal(skipReason("/session-pending"), null);
+  assert.equal(readFacts("/code-review high").slashCommand, "/code-review");
   // An attribute-bearing tag that is not on the list is still kept.
   assert.equal(skipReason('<div class="x">pasted markup</div>'), null);
 });

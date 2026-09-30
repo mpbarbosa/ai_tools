@@ -27,7 +27,7 @@
 /** Bumped whenever a threshold or pattern changes, and written into every
  *  record: a log that cannot say which rules produced it cannot be re-scored
  *  later, which is the whole point of keeping it. */
-export const HEURISTICS_VERSION = "1.2.0";
+export const HEURISTICS_VERSION = "1.3.0";
 
 /**
  * Wrapper tags Claude Code delivers through `UserPromptSubmit` that nobody
@@ -45,13 +45,27 @@ export const HEURISTICS_VERSION = "1.2.0";
  * ordinary prompts by token count, so a single scheduled run would skew the
  * very week of data it exists to analyse.
  *
+ * `command-name` is the one entry here on weaker evidence than the rest: it
+ * has never reached the log. A slash command arrives at the hook in its bare
+ * form — `/session-pending` is in the log, classified `meta`, with the
+ * `slashCommand` fact firing — and `<command-name>` is how a transcript
+ * *renders* the invocation. It is kept as a precaution, a no-op if that form
+ * never arrives. Its siblings seen in the same transcript
+ * (`<command-message>`, `<command-args>`, `<local-command-caveat>`) are left
+ * out on the same reasoning that keeps this list short.
+ *
  * An empirical list, not an exhaustive one: add a tag when the log shows a new
  * one (`jq -r 'select(.prompt.text | startswith("<"))'`). Only a *leading* tag
  * counts — a prompt that merely mentions one of these is a real prompt, and
  * `<pasted_content>` is deliberately absent, since a bare paste is something
  * the user submitted.
  */
-export const NON_PROMPT_WRAPPERS: readonly string[] = ["bash-input", "task-notification", "scheduled-task"];
+export const NON_PROMPT_WRAPPERS: readonly string[] = [
+  "bash-input",
+  "task-notification",
+  "scheduled-task",
+  "command-name",
+];
 
 /**
  * Why this payload should not be recorded, or `null` to record it. Pure, and

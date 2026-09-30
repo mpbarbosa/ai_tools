@@ -93,7 +93,11 @@ measurement it exists to produce.
 Claude Code delivers more than typed prompts through `UserPromptSubmit`: a `!`
 command run in the terminal panel arrives wrapped in `<bash-input>`, a finished
 background task arrives as `<task-notification>`, and a scheduled task's own
-instructions arrive as `<scheduled-task …>`. Those are dropped — silently,
+instructions arrive as `<scheduled-task …>`. `<command-name>` is on the list as
+a precaution only: a slash command reaches the hook in its **bare** form
+(`/session-pending` is in the log, read as `meta`), and the wrapper is how a
+transcript renders the invocation, so that entry is a no-op unless the form
+ever changes. Those are dropped — silently,
 writing nothing — because routing an event is meaningless and keeping it
 poisons the eval set this file exists to become.
 
