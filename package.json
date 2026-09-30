@@ -1,0 +1,19 @@
+{
+  "name": "ai-tools",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Prompt router for Claude Code: measure first, route later.",
+  "engines": {
+    "node": ">=23"
+  },
+  "scripts": {
+    "test": "node --test tests/",
+    "lint": "tsc --noEmit",
+    "hook:dry-run": "node user-prompt-submit.ts --dry-run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

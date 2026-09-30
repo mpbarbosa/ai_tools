@@ -1,0 +1,5 @@
+node_modules/
+# The router's own log, if it is ever pointed inside the repo. It holds prompt
+# text by default and has no business in git.
+*.jsonl
+data/
