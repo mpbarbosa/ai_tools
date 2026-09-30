@@ -66,6 +66,26 @@ Advice is off by default, and even switched on it never writes to
 `additionalContext`. A hook that alters the conversation it is measuring corrupts the
 measurement it exists to produce.
 
+### Not everything the hook receives is a prompt
+
+Claude Code delivers more than typed prompts through `UserPromptSubmit`: a `!`
+command run in the terminal panel arrives wrapped in `<bash-input>`, and a
+finished background task arrives as `<task-notification>`. Both were in the log
+within minutes of the hook going live. Those are dropped — silently, writing
+nothing — because routing an event is meaningless and keeping it poisons the
+eval set this file exists to become.
+
+`NON_PROMPT_WRAPPERS` is an empirical list, not an exhaustive one. When a new
+wrapper turns up, add it:
+
+```bash
+jq -r 'select(.prompt.text | startswith("<")) | .prompt.preview' ~/.claude/prompt-router/records.jsonl
+```
+
+Only a *leading* tag counts. A prompt that merely mentions `<bash-input>` is a
+real prompt, and `<pasted_content>` is deliberately not on the list: a bare
+paste is something you submitted.
+
 ### The log holds your prompts in full
 
 By default, because an eval set cannot be built from hashes. It lives under

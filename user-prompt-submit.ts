@@ -34,7 +34,7 @@
  * (`PROMPT_ROUTER_ADVISE=1`) and goes to `systemMessage`, which the human sees
  * and the model does not.
  */
-import { buildRecord, adviceLine, type HookPayload } from "./prompt-router-core.ts";
+import { buildRecord, adviceLine, skipReason, type HookPayload } from "./prompt-router-core.ts";
 import { advises, appendRecord, gatherEnv, keepsText, sha256 } from "./router-log.ts";
 
 const readStdin = async (): Promise<string> => {
@@ -59,9 +59,11 @@ const main = async (): Promise<void> => {
   const payload = parsePayload(await readStdin());
   const prompt = typeof payload.prompt === "string" ? payload.prompt : "";
 
-  // Nothing submitted means nothing to measure; a blank record would only
-  // dilute the log Phase 2 reads.
-  if (prompt.trim().length === 0) {
+  // Not everything this hook receives is a prompt somebody typed: terminal `!`
+  // commands and background-task notifications arrive here too, and recording
+  // them dilutes the log Phase 2 reads. Nothing is written and nothing is said
+  // — a dropped event should cost the session no output at all.
+  if (skipReason(prompt) !== null) {
     process.stdout.write("{}\n");
     return;
   }

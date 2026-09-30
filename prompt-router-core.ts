@@ -27,7 +27,36 @@
 /** Bumped whenever a threshold or pattern changes, and written into every
  *  record: a log that cannot say which rules produced it cannot be re-scored
  *  later, which is the whole point of keeping it. */
-export const HEURISTICS_VERSION = "1.0.0";
+export const HEURISTICS_VERSION = "1.1.0";
+
+/**
+ * Wrapper tags Claude Code delivers through `UserPromptSubmit` that nobody
+ * typed: a `!` command run in the terminal panel arrives wrapped in
+ * `<bash-input>`, and a finished background task arrives as
+ * `<task-notification>`. Both are events, not prompts, and both were in the
+ * log within minutes of the hook going live — a quarter of the first four
+ * records. Routing them is meaningless and leaving them in poisons the eval
+ * set Phase 2 builds from this file.
+ *
+ * An empirical list, not an exhaustive one: add a tag when the log shows a new
+ * one (`jq -r 'select(.prompt.text | startswith("<"))'`). Only a *leading* tag
+ * counts — a prompt that merely mentions one of these is a real prompt, and
+ * `<pasted_content>` is deliberately absent, since a bare paste is something
+ * the user submitted.
+ */
+export const NON_PROMPT_WRAPPERS: readonly string[] = ["bash-input", "task-notification"];
+
+/**
+ * Why this payload should not be recorded, or `null` to record it. Pure, and
+ * here rather than in the hook because "is this a prompt at all" is a judgment
+ * about meaning, which is what this module is for.
+ */
+export const skipReason = (prompt: string): string | null => {
+  const text = prompt.trim();
+  if (text.length === 0) return "empty";
+  const tag = /^<([a-z][a-z0-9-]*)>/.exec(text)?.[1];
+  return tag !== undefined && NON_PROMPT_WRAPPERS.includes(tag) ? tag : null;
+};
 
 /** ~3.5 characters per token, the ratio the Jev cost note in
  *  `portal_brasileirao/.claude/worktrees/typesafe-highlights/docs/jev.md`

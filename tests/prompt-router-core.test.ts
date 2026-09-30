@@ -12,6 +12,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import {
   buildRecord,
+  skipReason,
+  NON_PROMPT_WRAPPERS,
   classify,
   decide,
   readFacts,
@@ -42,6 +44,22 @@ test("accents and case do not change a reading", () => {
   const a = read("avaliação da arquitetura").classification;
   const b = read("AVALIACAO DA ARQUITETURA").classification;
   assert.deepEqual(a.kindScores, b.kindScores);
+});
+
+test("machine-generated events are not prompts", () => {
+  assert.equal(skipReason("<bash-input>git status</bash-input><bash-stdout>ok</bash-stdout>"), "bash-input");
+  assert.equal(skipReason("<task-notification>\n<task-id>abc</task-id>\n</task-notification>"), "task-notification");
+  assert.equal(skipReason("   "), "empty");
+  assert.equal(skipReason(""), "empty");
+});
+
+test("a real prompt survives, even when it talks about the wrappers", () => {
+  assert.equal(skipReason("commit this"), null);
+  // Only a LEADING tag is an event. Asking about one is an ordinary prompt.
+  assert.equal(skipReason("why is <bash-input> showing up in the log?"), null);
+  // An unknown tag is kept: it may be something the user submitted.
+  assert.equal(skipReason("<pasted_content>some log lines</pasted_content>"), null);
+  assert.ok(!NON_PROMPT_WRAPPERS.includes("pasted_content"));
 });
 
 test("a query string is not a question", () => {
