@@ -27,7 +27,7 @@
 /** Bumped whenever a threshold or pattern changes, and written into every
  *  record: a log that cannot say which rules produced it cannot be re-scored
  *  later, which is the whole point of keeping it. */
-export const HEURISTICS_VERSION = "1.3.0";
+export const HEURISTICS_VERSION = "1.4.0";
 
 /**
  * Wrapper tags Claude Code delivers through `UserPromptSubmit` that nobody
@@ -345,8 +345,14 @@ const KIND_PATTERNS: Readonly<Record<Exclude<TaskKind, "other">, readonly RegExp
   ],
   code_edit: [
     /\b(?:implement\w*|cri(?:ar|e|a|ando)|create|escrev\w*|write|construir|build)\b/,
-    /\b(?:adicion\w*|refator\w*|refactor|corrig\w*|fix|ajust\w*)\b/,
-    /\b(?:migr\w*|migrate|port(?:ar|e)|extra(?:ir|i)|extract)\b/,
+    // `add` is spelled out because the Portuguese stem does not reach it:
+    // `adicion\w*` covers adiciona/adicionar and misses the bare English verb
+    // entirely. "add command-name to the wrapper list" read as `other` with
+    // confidence 0 until this line named it.
+    /\b(?:adicion\w*|add|refator\w*|refactor|corrig\w*|fix|ajust\w*)\b/,
+    // Same regression: `port(?:ar|e)` lost bare English "port". The optional
+    // group keeps "porta" out, since the word boundary fails mid-word.
+    /\b(?:migr\w*|migrate|port(?:ar|e)?|extra(?:ir|i)|extract)\b/,
   ],
   code_read: [
     /\b(?:explic\w*|explain|como funciona|how does|entend\w*|understand)\b/,

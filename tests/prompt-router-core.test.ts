@@ -87,6 +87,21 @@ test("a query string is not a question", () => {
   assert.equal(withQuestion.questions, 1);
 });
 
+test("English imperatives read the same as their Portuguese forms", () => {
+  // The stem rewrite that taught the patterns Portuguese conjugation silently
+  // dropped bare English "add" and "port" — two of the commonest verbs in the
+  // vocabulary. Both sides of each pair must read alike.
+  for (const [en, pt] of [
+    ["add command-name to the wrapper list", "adiciona command-name na lista"],
+    ["port this module to TypeScript", "portar esse modulo para TypeScript"],
+  ]) {
+    assert.equal(read(en).classification.taskKind, "code_edit", `English: ${en}`);
+    assert.equal(read(pt).classification.taskKind, "code_edit", `Portuguese: ${pt}`);
+  }
+  // "porta" (a port number, a door) must not read as the verb.
+  assert.equal(read("a porta 5678 esta ocupada").classification.kindScores.code_edit, 0);
+});
+
 test("a design prompt reads as design, needing judgment", () => {
   const { classification } = read(
     "Avalie qual a melhor arquitetura para isso e compare os tradeoffs das duas abordagens antes de decidir",
